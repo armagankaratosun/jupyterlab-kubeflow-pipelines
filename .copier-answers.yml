@@ -2,7 +2,7 @@
 _commit: v4.5.1
 _src_path: https://github.com/jupyterlab/extension-template
 author_email: armagankaratosun@gmail.com
-author_name: Armağan Karatosun
+author_name: Armagan Karatosun
 create_claude_symlink: true
 create_gemini_symlink: true
 has_ai_rules: true
