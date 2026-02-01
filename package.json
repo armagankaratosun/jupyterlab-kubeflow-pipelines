@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab-kubeflow-pipelines",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Kubeflow Pipelines v2 integration for JupyterLab.",
     "keywords": [
         "jupyter",
@@ -13,7 +13,7 @@
     },
     "license": "BSD-3-Clause",
     "author": {
-        "name": "Armğan Karatosun",
+        "name": "Arm\u011fan Karatosun",
         "email": "armagankaratosun@gmail.com"
     },
     "files": [
