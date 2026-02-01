@@ -20,8 +20,8 @@ export function activateKfpPlugin(
   palette: ICommandPalette | null,
   notebookTracker: INotebookTracker | null
 ): void {
-  console.log(
-    'JupyterLab extension jupyterlab-kubeflow-pipelines is activated! Version: 0.1.2'
+  console.info(
+    'JupyterLab extension jupyterlab-kubeflow-pipelines is activated!'
   );
 
   registerNavigationCommands(app);
