@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab-kubeflow-pipelines",
-    "version": "0.1.2",
+    "version": "0.1.4",
     "description": "Kubeflow Pipelines v2 integration for JupyterLab.",
     "keywords": [
         "jupyter",
