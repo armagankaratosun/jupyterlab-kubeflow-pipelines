@@ -1,0 +1,21 @@
+{
+  "jupyter.lab.shortcuts": [],
+  "title": "jupyterlab-kubeflow-pipelines",
+  "description": "jupyterlab-kubeflow-pipelines settings.",
+  "type": "object",
+  "properties": {
+    "endpoint": {
+      "type": "string",
+      "title": "KFP Endpoint URL",
+      "description": "KFP base URL (scheme://host:port). This value is persisted in JupyterLab user settings. Auth token is not persisted.",
+      "default": ""
+    },
+    "namespace": {
+      "type": "string",
+      "title": "Default Namespace",
+      "description": "Default Kubeflow namespace to use for KFP calls. This value is persisted in JupyterLab user settings.",
+      "default": "kubeflow"
+    }
+  },
+  "additionalProperties": false
+}
