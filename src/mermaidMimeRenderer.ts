@@ -14,7 +14,9 @@ type MermaidPayload = {
 let mermaidInitialized = false;
 
 function ensureMermaidInitialized(): void {
-  if (mermaidInitialized) return;
+  if (mermaidInitialized) {
+    return;
+  }
   mermaidInitialized = true;
 
   mermaid.initialize({
@@ -42,7 +44,9 @@ class MermaidMimeRenderer extends Widget implements IRenderMime.IRenderer {
   async renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     ensureMermaidInitialized();
 
-    const payload = model.data[MIME_TYPE] as unknown as MermaidPayload | undefined;
+    const payload = model.data[MIME_TYPE] as unknown as
+      | MermaidPayload
+      | undefined;
     const mermaidSource = payload?.mermaid;
     const title = payload?.title ?? null;
 

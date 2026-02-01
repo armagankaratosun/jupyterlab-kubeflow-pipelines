@@ -25,7 +25,9 @@ export function registerImportPipelineAction(app: JupyterFrontEnd): void {
       const body = ReactWidget.create(
         <ImportPipelineDialog
           onClose={() => {
-            if (dialogRef.current) dialogRef.current.resolve(0);
+            if (dialogRef.current) {
+              dialogRef.current.resolve(0);
+            }
           }}
           onOpenPipelineDetails={(pipelineId: string) => {
             commands.execute(OPEN_TAB_COMMAND_ID, {
@@ -69,7 +71,9 @@ export function registerSubmitPipelineAction(
       if (notebook.model) {
         for (let i = 0; i < notebook.model.cells.length; i++) {
           const cell = notebook.model.cells.get(i);
-          if (cell.type !== 'code') continue;
+          if (cell.type !== 'code') {
+            continue;
+          }
 
           let text = '';
           if ((cell as any).sharedModel) {
@@ -114,7 +118,9 @@ export function registerSubmitPipelineAction(
             sourceCode={sourceCode}
             inspectedPipelines={inspection.pipelines}
             onClose={() => {
-              if (dialogRef.current) dialogRef.current.resolve(0);
+              if (dialogRef.current) {
+                dialogRef.current.resolve(0);
+              }
             }}
             onOpenRunDetails={(runId: string) => {
               commands.execute(OPEN_TAB_COMMAND_ID, {

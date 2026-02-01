@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
 
-interface PipelinePreviewProps {
+type PipelinePreviewProps = {
   pipeline: any; // The inspected pipeline object
-}
+};
 
 const PipelinePreview: React.FC<PipelinePreviewProps> = ({ pipeline }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!pipeline) return;
+    if (!pipeline) {
+      return;
+    }
 
     // Initialize mermaid
     mermaid.initialize({
@@ -50,7 +52,7 @@ const PipelinePreview: React.FC<PipelinePreviewProps> = ({ pipeline }) => {
       }
 
       // Build nodes and edges
-      Object.keys(tasks).forEach((taskName) => {
+      Object.keys(tasks).forEach(taskName => {
         const task = tasks[taskName];
         const safeTaskName = taskName.replace(/[^a-zA-Z0-9]/g, '_');
         const label = task.componentRef?.name || taskName;

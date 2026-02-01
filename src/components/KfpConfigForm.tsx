@@ -7,12 +7,12 @@ import {
   testConnection
 } from '../api';
 
-interface KfpConfigFormProps {
+type KfpConfigFormProps = {
   onConfigSave?: (config: KfpConfig) => void;
   onCancel?: () => void;
   title?: string;
   description?: string;
-}
+};
 
 /**
  * A shared form for configuring Kubeflow Pipelines settings.
@@ -60,7 +60,10 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
       if (!u.hostname) {
         return 'Endpoint URL must include a host.';
       }
-      if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && !u.port) {
+      if (
+        (u.hostname === 'localhost' || u.hostname === '127.0.0.1') &&
+        !u.port
+      ) {
         return 'For localhost, include a port (e.g. http://localhost:8080).';
       }
     } catch {
@@ -95,9 +98,12 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
         return null;
       }
 
-      const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(':'); // very rough IPv6 heuristic
+      const isIp =
+        /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(':'); // very rough IPv6 heuristic
       const isLocalhost =
-        hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '::1';
       const hasDot = hostname.includes('.');
 
       if (!hasDot && !isIp && !isLocalhost) {
@@ -182,7 +188,10 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
           e?.response?.data?.error || e?.message || 'Connection test failed.';
         setConnectivity({ ok: false, detail });
         setConnectionOk(false);
-        setMessage({ text: `Saved, but connection failed: ${detail}`, type: 'error' });
+        setMessage({
+          text: `Saved, but connection failed: ${detail}`,
+          type: 'error'
+        });
       }
     } catch (e) {
       setMessage({
@@ -209,7 +218,7 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
         <input
           type="text"
           value={endpoint}
-          onChange={(e) => {
+          onChange={e => {
             e.stopPropagation();
             setEndpoint(e.target.value);
           }}
@@ -240,7 +249,7 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
         <input
           type="text"
           value={namespace}
-          onChange={(e) => {
+          onChange={e => {
             e.stopPropagation();
             setNamespace(e.target.value);
           }}
@@ -254,7 +263,7 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
         <input
           type="password"
           value={token}
-          onChange={(e) => {
+          onChange={e => {
             e.stopPropagation();
             setToken(e.target.value);
           }}
@@ -313,11 +322,19 @@ export const KfpConfigForm: React.FC<KfpConfigFormProps> = ({
       )}
 
       <div className="jp-KfpButtonGroup">
-        <button className="jp-KfpSaveButton" onClick={handleSave} disabled={isSaving}>
+        <button
+          className="jp-KfpSaveButton"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
           {isSaving ? 'Connecting...' : 'Connect'}
         </button>
         {onCancel && (
-          <button className="jp-KfpCancelButton" onClick={onCancel} disabled={isSaving}>
+          <button
+            className="jp-KfpCancelButton"
+            onClick={onCancel}
+            disabled={isSaving}
+          >
             Cancel
           </button>
         )}

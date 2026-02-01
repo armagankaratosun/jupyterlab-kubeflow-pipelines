@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { importPipelineFromYaml } from '../api';
 
-interface ImportPipelineDialogProps {
+type ImportPipelineDialogProps = {
   onClose: () => void;
   onOpenPipelineDetails: (pipelineId: string) => void;
-}
+};
 
 export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
   onClose,
@@ -22,9 +22,13 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
 
   const validate = (): string | null => {
     const name = pipelineName.trim();
-    if (!name) return 'Pipeline name is required.';
+    if (!name) {
+      return 'Pipeline name is required.';
+    }
     const yaml = pipelineYaml.trim();
-    if (!yaml) return 'Pipeline YAML is required.';
+    if (!yaml) {
+      return 'Pipeline YAML is required.';
+    }
     return null;
   };
 
@@ -47,7 +51,9 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
 
       const pipelineId = String(res?.pipeline_id || '');
       if (!pipelineId) {
-        throw new Error('Import succeeded but pipeline_id was missing in response.');
+        throw new Error(
+          'Import succeeded but pipeline_id was missing in response.'
+        );
       }
       setCreated({ pipelineId, pipelineName: pipelineName.trim() });
     } catch (e: any) {
@@ -60,7 +66,10 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
         );
       } else {
         setError(
-          body?.error || body?.detail || e?.message || 'Failed to import pipeline.'
+          body?.error ||
+            body?.detail ||
+            e?.message ||
+            'Failed to import pipeline.'
         );
       }
     } finally {
@@ -80,7 +89,7 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
         <input
           type="text"
           value={pipelineName}
-          onChange={(e) => {
+          onChange={e => {
             e.stopPropagation();
             setPipelineName(e.target.value);
           }}
@@ -94,7 +103,7 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
         <input
           type="text"
           value={description}
-          onChange={(e) => {
+          onChange={e => {
             e.stopPropagation();
             setDescription(e.target.value);
           }}
@@ -107,7 +116,7 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
         <label>Pipeline YAML</label>
         <textarea
           value={pipelineYaml}
-          onChange={(e) => {
+          onChange={e => {
             e.stopPropagation();
             setPipelineYaml(e.target.value);
           }}
@@ -157,7 +166,9 @@ export const ImportPipelineDialog: React.FC<ImportPipelineDialogProps> = ({
             wordBreak: 'break-word'
           }}
         >
-          <div style={{ fontWeight: 600, marginBottom: '4px' }}>Pipeline imported</div>
+          <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+            Pipeline imported
+          </div>
           <div>
             Pipeline ID:{' '}
             <span style={{ fontFamily: 'var(--jp-code-font-family)' }}>

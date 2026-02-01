@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { KfpConfig, getConfig, getConnectionOk, logout } from '../api';
 import { KfpConfigForm } from './KfpConfigForm';
 
-interface KfpSidebarLauncherProps {
+type KfpSidebarLauncherProps = {
   onOpenPath: (path: string, label: string) => void;
-}
+};
 
 export const KfpSidebarLauncher: React.FC<KfpSidebarLauncherProps> = ({
   onOpenPath
@@ -48,7 +48,9 @@ export const KfpSidebarLauncher: React.FC<KfpSidebarLauncherProps> = ({
 
   const handleLogout = async () => {
     if (
-      window.confirm('Are you sure you want to disconnect from Kubeflow Pipelines?')
+      window.confirm(
+        'Are you sure you want to disconnect from Kubeflow Pipelines?'
+      )
     ) {
       await logout();
     }
@@ -62,12 +64,14 @@ export const KfpSidebarLauncher: React.FC<KfpSidebarLauncherProps> = ({
     return (
       <div className="jp-KfpSidebarContent">
         <KfpConfigForm
-          onConfigSave={(newConfig) => {
+          onConfigSave={newConfig => {
             setConfig(newConfig);
             setIsConnected(true);
             setIsConfiguring(false);
           }}
-          onCancel={config && isConnected ? () => setIsConfiguring(false) : undefined}
+          onCancel={
+            config && isConnected ? () => setIsConfiguring(false) : undefined
+          }
         />
       </div>
     );
@@ -114,7 +118,7 @@ export const KfpSidebarLauncher: React.FC<KfpSidebarLauncherProps> = ({
         <span>Kubeflow Pipelines</span>
       </div>
       <div className="jp-KfpLauncherList">
-        {items.map((item) => (
+        {items.map(item => (
           <div
             key={item.id}
             className="jp-KfpLauncherItem"
@@ -127,7 +131,10 @@ export const KfpSidebarLauncher: React.FC<KfpSidebarLauncherProps> = ({
       </div>
 
       <div className="jp-KfpSidebarFooter">
-        <button className="jp-mod-styled" onClick={() => setIsConfiguring(true)}>
+        <button
+          className="jp-mod-styled"
+          onClick={() => setIsConfiguring(true)}
+        >
           Settings
         </button>
         <button className="jp-mod-styled" onClick={handleLogout}>

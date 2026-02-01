@@ -1,4 +1,7 @@
-import { ILayoutRestorer, JupyterFrontEndPlugin } from '@jupyterlab/application';
+import {
+  ILayoutRestorer,
+  JupyterFrontEndPlugin
+} from '@jupyterlab/application';
 import { ICommandPalette } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
 import { INotebookTracker } from '@jupyterlab/notebook';
@@ -17,7 +20,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [ISettingRegistry],
   optional: [ILauncher, ICommandPalette, ILayoutRestorer, INotebookTracker],
-  activate: async (app, settingRegistry, launcher, palette, restorer, notebookTracker) => {
+  activate: async (
+    app,
+    settingRegistry,
+    launcher,
+    palette,
+    restorer,
+    notebookTracker
+  ) => {
     void restorer;
     const settings = await settingRegistry.load(plugin.id);
     initializeSettings(settings);

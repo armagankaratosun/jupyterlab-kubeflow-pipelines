@@ -19,11 +19,14 @@ export const PipelineSubmitDialog = ({
     inspectedPipelines[0] || {}
   );
   const [experiments, setExperiments] = React.useState<any[]>([]);
-  const [selectedExperimentId, setSelectedExperimentId] = React.useState<string>('');
+  const [selectedExperimentId, setSelectedExperimentId] =
+    React.useState<string>('');
   const [params, setParams] = React.useState<any>({});
   const [runName, setRunName] = React.useState<string>('');
   const [submitting, setSubmitting] = React.useState(false);
-  const [submittedRunId, setSubmittedRunId] = React.useState<string | null>(null);
+  const [submittedRunId, setSubmittedRunId] = React.useState<string | null>(
+    null
+  );
   const [terminating, setTerminating] = React.useState(false);
   const [status, setStatus] = React.useState<string>('');
   const [error, setError] = React.useState<string>('');
@@ -39,7 +42,9 @@ export const PipelineSubmitDialog = ({
         selectedPipeline.args.forEach((arg: any) => {
           // Use arg.default if it exists, otherwise empty string
           defaultParams[arg.name] =
-            arg.default !== undefined && arg.default !== null && arg.default !== 'None'
+            arg.default !== undefined &&
+            arg.default !== null &&
+            arg.default !== 'None'
               ? arg.default
               : '';
         });
@@ -49,7 +54,7 @@ export const PipelineSubmitDialog = ({
 
     // Fetch experiments (only when config changes or on initial load)
     getExperiments(config)
-      .then((data) => {
+      .then(data => {
         setExperiments(data.experiments || []);
         if (data.experiments && data.experiments.length > 0) {
           setSelectedExperimentId(data.experiments[0].id);
@@ -99,7 +104,9 @@ export const PipelineSubmitDialog = ({
   };
 
   const handleTerminate = async () => {
-    if (!submittedRunId) return;
+    if (!submittedRunId) {
+      return;
+    }
     setError('');
     setTerminating(true);
     try {
@@ -116,7 +123,9 @@ export const PipelineSubmitDialog = ({
   };
 
   if (!selectedPipeline.name) {
-    return <div className="jp-KfpMessage">No pipelines found in this notebook.</div>;
+    return (
+      <div className="jp-KfpMessage">No pipelines found in this notebook.</div>
+    );
   }
 
   const openInBrowserUrl = submittedRunId
@@ -135,8 +144,10 @@ export const PipelineSubmitDialog = ({
         <label>Select Pipeline</label>
         <select
           value={selectedPipeline.name}
-          onChange={(e) => {
-            const p = inspectedPipelines.find((p: any) => p.name === e.target.value);
+          onChange={e => {
+            const p = inspectedPipelines.find(
+              (p: any) => p.name === e.target.value
+            );
             setSelectedPipeline(p);
           }}
           disabled={submitting}
@@ -154,7 +165,7 @@ export const PipelineSubmitDialog = ({
         <input
           type="text"
           value={runName}
-          onChange={(e) => setRunName(e.target.value)}
+          onChange={e => setRunName(e.target.value)}
           disabled={submitting}
         />
       </div>
@@ -162,12 +173,15 @@ export const PipelineSubmitDialog = ({
         <label>Experiment</label>
         <select
           value={selectedExperimentId}
-          onChange={(e) => setSelectedExperimentId(e.target.value)}
+          onChange={e => setSelectedExperimentId(e.target.value)}
           disabled={submitting}
         >
           <option value="">(Default Experiment)</option>
           {experiments.map((e: any) => (
-            <option key={e.experiment_id || e.id} value={e.experiment_id || e.id}>
+            <option
+              key={e.experiment_id || e.id}
+              value={e.experiment_id || e.id}
+            >
               {e.display_name || e.name}
             </option>
           ))}
@@ -179,7 +193,13 @@ export const PipelineSubmitDialog = ({
       {selectedPipeline.args &&
         selectedPipeline.args.map((arg: any) => (
           <div key={arg.name} style={{ marginBottom: '8px' }}>
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                marginBottom: '4px'
+              }}
+            >
               {arg.name} {arg.default ? `(default: ${arg.default})` : ''}
             </label>
             <input
@@ -191,19 +211,27 @@ export const PipelineSubmitDialog = ({
                 borderRadius: '4px'
               }}
               value={params[arg.name] || ''}
-              onChange={(e) => setParams({ ...params, [arg.name]: e.target.value })}
+              onChange={e =>
+                setParams({ ...params, [arg.name]: e.target.value })
+              }
               disabled={submitting}
             />
           </div>
         ))}
 
       {error && (
-        <div className="jp-KfpMessage" style={{ color: 'var(--jp-error-color1)' }}>
+        <div
+          className="jp-KfpMessage"
+          style={{ color: 'var(--jp-error-color1)' }}
+        >
           {error}
         </div>
       )}
       {status && (
-        <div className="jp-KfpMessage" style={{ color: 'var(--jp-success-color1)' }}>
+        <div
+          className="jp-KfpMessage"
+          style={{ color: 'var(--jp-success-color1)' }}
+        >
           {status}
         </div>
       )}

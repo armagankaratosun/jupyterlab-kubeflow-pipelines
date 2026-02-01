@@ -4,7 +4,10 @@ import type { ILauncher } from '@jupyterlab/launcher';
 import type { INotebookTracker } from '@jupyterlab/notebook';
 
 import { IMPORT_PIPELINE_YAML_COMMAND_ID } from './commandIds';
-import { registerImportPipelineAction, registerSubmitPipelineAction } from './actions';
+import {
+  registerImportPipelineAction,
+  registerSubmitPipelineAction
+} from './actions';
 import { registerLauncherItems, registerPaletteItems } from './launcherPalette';
 import { addNotebookMessageListener } from './messages';
 import { registerNavigationCommands } from './navigation';

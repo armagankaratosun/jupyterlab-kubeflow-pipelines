@@ -8,7 +8,9 @@ export function addNotebookMessageListener(app: JupyterFrontEnd): void {
   const { commands } = app;
 
   window.addEventListener('message', (event: MessageEvent) => {
-    if (!event.data) return;
+    if (!event.data) {
+      return;
+    }
 
     if (event.data.type === 'kfp-open-run' && event.data.runId) {
       const path = `#/runs/details/${event.data.runId}`;

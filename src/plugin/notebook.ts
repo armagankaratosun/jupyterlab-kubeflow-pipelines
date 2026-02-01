@@ -9,7 +9,9 @@ export function addNotebookToolbarButton(
   app: JupyterFrontEnd,
   notebookTracker: INotebookTracker | null
 ): void {
-  if (!notebookTracker) return;
+  if (!notebookTracker) {
+    return;
+  }
 
   const { commands } = app;
   notebookTracker.widgetAdded.connect((sender: any, panel: any) => {

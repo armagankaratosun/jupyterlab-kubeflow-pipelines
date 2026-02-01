@@ -8,7 +8,9 @@ const CONNECTION_OK_KEY = '__kfpConnectionOk';
 let pluginSettings: ISettingRegistry.ISettings | null = null;
 let lastBackendSynced: { endpoint: string; namespace: string } | null = null;
 
-export const initializeSettings = (settings: ISettingRegistry.ISettings): void => {
+export const initializeSettings = (
+  settings: ISettingRegistry.ISettings
+): void => {
   pluginSettings = settings;
 };
 
@@ -20,7 +22,10 @@ const getPersistedString = (key: string, fallback: string): string => {
   return typeof value === 'string' ? value : fallback;
 };
 
-export const getPersistedConfig = (): Pick<KfpConfig, 'endpoint' | 'namespace'> => {
+export const getPersistedConfig = (): Pick<
+  KfpConfig,
+  'endpoint' | 'namespace'
+> => {
   return {
     endpoint: getPersistedString('endpoint', ''),
     namespace: getPersistedString('namespace', 'kubeflow') || 'kubeflow'
@@ -42,7 +47,10 @@ const setPersistedConfig = async (
 
 export const syncBackendConfigFromSettings = async (): Promise<void> => {
   const { endpoint, namespace } = getPersistedConfig();
-  const normalized = { endpoint: endpoint ?? '', namespace: namespace ?? 'kubeflow' };
+  const normalized = {
+    endpoint: endpoint ?? '',
+    namespace: namespace ?? 'kubeflow'
+  };
 
   if (
     lastBackendSynced &&
@@ -74,12 +82,12 @@ export const setConnectionOk = (ok: boolean): void => {
   (window as any)[CONNECTION_OK_KEY] = ok;
 };
 
-export interface KfpConfig {
+export type KfpConfig = {
   endpoint: string;
   namespace: string;
   token?: string;
   has_token?: boolean;
-}
+};
 
 type BackendConfig = {
   endpoint?: string | null;

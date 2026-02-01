@@ -8,7 +8,9 @@ export function registerLauncherItems(
   launcher: ILauncher | null,
   commandIds: { importPipelineYaml: string }
 ): void {
-  if (!launcher) return;
+  if (!launcher) {
+    return;
+  }
 
   launcher.add({
     command: HOME_COMMAND_ID,
@@ -38,7 +40,9 @@ export function registerPaletteItems(
   palette: ICommandPalette | null,
   commandIds: { importPipelineYaml: string }
 ): void {
-  if (!palette) return;
+  if (!palette) {
+    return;
+  }
 
   palette.addItem({ command: HOME_COMMAND_ID, category: 'Kubeflow Pipelines' });
   palette.addItem({
@@ -46,7 +50,7 @@ export function registerPaletteItems(
     category: 'Kubeflow Pipelines'
   });
 
-  KFP_SECTIONS.forEach((section) => {
+  KFP_SECTIONS.forEach(section => {
     palette.addItem({
       command: `kfp:open-${section.id}`,
       category: 'Kubeflow Pipelines'

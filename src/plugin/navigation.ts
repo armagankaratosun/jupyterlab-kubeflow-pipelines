@@ -16,7 +16,7 @@ export function registerNavigationCommands(app: JupyterFrontEnd): void {
     }
   });
 
-  KFP_SECTIONS.forEach((section) => {
+  KFP_SECTIONS.forEach(section => {
     const commandId = `kfp:open-${section.id}`;
     commands.addCommand(commandId, {
       label: section.label,
@@ -30,9 +30,9 @@ export function registerNavigationCommands(app: JupyterFrontEnd): void {
 
   // Backwards-compatible generic open-tab command
   commands.addCommand(OPEN_TAB_COMMAND_ID, {
-    label: (args) => (args['label'] as string) || 'Kubeflow Pipelines',
+    label: args => (args['label'] as string) || 'Kubeflow Pipelines',
     caption: 'Open a KFP UI dashboard tab',
-    execute: (args) => {
+    execute: args => {
       const path = (args['path'] as string) || '#/runs';
       const label = (args['label'] as string) || 'KFP Runs';
       openOrActivateKfpTab(app, path, label);

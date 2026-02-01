@@ -3,9 +3,9 @@ import { ReactWidget } from '@jupyterlab/apputils';
 import { KfpConfig, getConfig, getConnectionOk, kfpUiProxyUrl } from '../api';
 import { KfpConfigForm } from './KfpConfigForm';
 
-interface KfpIframeProps {
+type KfpIframeProps = {
   path: string;
-}
+};
 
 /**
  * A React component that renders the KFP UI in an iframe.
@@ -50,7 +50,7 @@ const KfpIframe: React.FC<KfpIframeProps> = ({ path }) => {
     return (
       <div className="jp-KfpConnectContainer">
         <KfpConfigForm
-          onConfigSave={(newConfig) => {
+          onConfigSave={newConfig => {
             setConfig(newConfig);
             setIsConnected(true);
           }}
@@ -61,7 +61,9 @@ const KfpIframe: React.FC<KfpIframeProps> = ({ path }) => {
 
   // We proxy through /kfp-ui/ which is handled by KfpUIProxyHandler
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  const proxyBase = kfpUiProxyUrl.endsWith('/') ? kfpUiProxyUrl : `${kfpUiProxyUrl}/`;
+  const proxyBase = kfpUiProxyUrl.endsWith('/')
+    ? kfpUiProxyUrl
+    : `${kfpUiProxyUrl}/`;
   const iframeUrl = `${proxyBase}${cleanPath}`;
 
   return (
@@ -85,7 +87,9 @@ const KfpIframe: React.FC<KfpIframeProps> = ({ path }) => {
 export class KfpIframeWidget extends ReactWidget {
   static widgetIdForPath(path: string): string {
     const normalized = path || 'root';
-    const safe = normalized.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+    const safe = normalized
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
     return `kfp-ui-${safe || 'root'}`;
   }
 
