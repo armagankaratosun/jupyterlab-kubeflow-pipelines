@@ -29,11 +29,24 @@ class KfpProxyHandler(APIHandler):
         if self.request.query:
             kfp_url += f"?{self.request.query}"
 
-        headers = dict(self.request.headers)
+        headers: dict[str, str] = {}
+        for h, v in self.request.headers.items():
+            l_h = h.lower()
+            if l_h in [
+                "host",
+                "content-length",
+                "cookie",
+                "x-xsrftoken",
+                "x-jupyter-xsrf",
+                "authorization",
+                "token",
+            ]:
+                continue
+            headers[h] = v
+
         cfg = get_config(self)
         if cfg.token:
             headers["Authorization"] = f"Bearer {cfg.token}"
-        headers.pop("Host", None)
 
         body = None
         allow_nonstandard_methods = False

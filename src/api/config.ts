@@ -1,7 +1,6 @@
-import axios from 'axios';
 import type { ISettingRegistry } from '@jupyterlab/settingregistry';
 
-import { baseUrl, getCookie } from './base';
+import { requestAPI } from '../request';
 
 const CONNECTION_OK_KEY = '__kfpConnectionOk';
 
@@ -60,12 +59,12 @@ export const syncBackendConfigFromSettings = async (): Promise<void> => {
     return;
   }
 
-  const settingsUrl = `${baseUrl}jupyterlab-kubeflow-pipelines/settings`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = xsrfToken ? { 'X-XSRFToken': xsrfToken } : {};
-
   try {
-    await axios.post(settingsUrl, normalized, { headers });
+    await requestAPI('settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(normalized)
+    });
     lastBackendSynced = normalized;
     window.dispatchEvent(new CustomEvent('kfp-config-changed'));
   } catch (e) {
@@ -97,11 +96,9 @@ type BackendConfig = {
 
 export const getConfig = async (): Promise<KfpConfig> => {
   const persisted = getPersistedConfig();
-  const settingsUrl = `${baseUrl}jupyterlab-kubeflow-pipelines/settings`;
   let backend: BackendConfig = {};
   try {
-    const response = await axios.get(settingsUrl);
-    backend = response.data ?? {};
+    backend = await requestAPI<BackendConfig>('settings');
   } catch {
     backend = {};
   }
@@ -127,9 +124,7 @@ type KfpConnectivityResult = {
 };
 
 export const testConnection = async (): Promise<KfpConnectivityResult> => {
-  const url = `${baseUrl}jupyterlab-kubeflow-pipelines/debug`;
-  const response = await axios.get(url);
-  return response.data;
+  return requestAPI<KfpConnectivityResult>('debug');
 };
 
 type SaveConfigOptions = {
@@ -152,16 +147,18 @@ export const saveConfig = async (
   lastBackendSynced = desired;
   await setPersistedConfig(desired);
 
-  const settingsUrl = `${baseUrl}jupyterlab-kubeflow-pipelines/settings`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = xsrfToken ? { 'X-XSRFToken': xsrfToken } : {};
-
-  const payload: any = { ...desired };
+  const payload: { endpoint: string; namespace: string; token?: string } = {
+    ...desired
+  };
   if (config.token && config.token.trim()) {
     payload.token = config.token;
   }
   try {
-    await axios.post(settingsUrl, payload, { headers });
+    await requestAPI('settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
   } catch (e) {
     // Restore so a future settings.changed can retry syncing to backend.
     lastBackendSynced = previousBackendSynced;
@@ -176,12 +173,12 @@ export const saveConfig = async (
 };
 
 export const logout = async (): Promise<void> => {
-  const settingsUrl = `${baseUrl}jupyterlab-kubeflow-pipelines/settings`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = xsrfToken ? { 'X-XSRFToken': xsrfToken } : {};
-
   // Clear token for this server session only (do not clear persisted endpoint/namespace).
-  await axios.post(settingsUrl, { token: '' }, { headers });
+  await requestAPI('settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: '' })
+  });
 
   setConnectionOk(false);
   window.dispatchEvent(new CustomEvent('kfp-config-changed'));

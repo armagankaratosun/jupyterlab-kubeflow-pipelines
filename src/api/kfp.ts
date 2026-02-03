@@ -1,77 +1,102 @@
-import axios from 'axios';
-
 import type { KfpConfig } from './config';
-import { baseUrl, getCookie, kfpProxyUrl } from './base';
+import { requestAPI } from '../request';
+
+type ExperimentListResponse = {
+  experiments?: Array<{ id: string; name?: string }>;
+  next_page_token?: string;
+};
+
+type PipelineArg = {
+  name: string;
+  default: string | null;
+  type: string;
+};
+
+type PipelineDescriptor = {
+  name: string;
+  display_name?: string;
+  description?: string | null;
+  args: PipelineArg[];
+};
+
+type CompileResult = {
+  pipelines?: PipelineDescriptor[];
+  status?: 'compiled';
+  pipeline_name?: string;
+  package_path?: string;
+  yaml?: string;
+  error?: string;
+};
+
+type SubmitResult = {
+  run_id: string;
+  run_name?: string;
+  url?: string;
+};
+
+type ImportPipelineResult = {
+  pipeline_id?: string;
+  pipeline_name?: string;
+  url?: string;
+  error?: string;
+};
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 export const getExperiments = async (config: KfpConfig) => {
-  const response = await axios.get(`${kfpProxyUrl}/experiments`, {
-    params: { namespace: config.namespace }
-  });
-  return response.data;
+  const query = new URLSearchParams({ namespace: config.namespace });
+  return requestAPI<ExperimentListResponse>(
+    `proxy/experiments?${query.toString()}`
+  );
 };
 
 export const compilePipeline = async (
-  config: KfpConfig,
+  _config: KfpConfig,
   sourceCode: string,
   action: 'inspect' | 'compile' = 'inspect',
   pipelineName?: string
 ) => {
-  void config;
-  const url = `${baseUrl}jupyterlab-kubeflow-pipelines/kfp/compile`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = {
-    ...(xsrfToken ? { 'X-XSRFToken': xsrfToken } : {})
-  };
-
-  const response = await axios.post(
-    url,
-    {
+  return requestAPI<CompileResult>('kfp/compile', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
       source_code: sourceCode,
       action,
       pipeline_name: pipelineName
-    },
-    { headers }
-  );
-  return response.data;
+    })
+  });
 };
 
 export const submitPipeline = async (
-  config: KfpConfig,
+  _config: KfpConfig,
   packagePath: string | undefined,
   pipelineYaml: string | undefined,
-  params: any,
+  params: Record<string, unknown>,
   runName?: string,
   experimentId?: string
 ) => {
-  void config;
-  const url = `${baseUrl}jupyterlab-kubeflow-pipelines/kfp/submit`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = {
-    ...(xsrfToken ? { 'X-XSRFToken': xsrfToken } : {})
-  };
-
-  const response = await axios.post(
-    url,
-    {
+  return requestAPI<SubmitResult>('kfp/submit', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
       package_path: packagePath,
       pipeline_yaml: pipelineYaml,
       params,
       run_name: runName,
       experiment_id: experimentId
-    },
-    { headers }
-  );
-  return response.data;
+    })
+  });
 };
 
 export const terminateRun = async (runId: string) => {
-  const url = `${baseUrl}jupyterlab-kubeflow-pipelines/runs/${runId}:terminate`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = {
-    ...(xsrfToken ? { 'X-XSRFToken': xsrfToken } : {})
-  };
-  const response = await axios.post(url, {}, { headers });
-  return response.data;
+  return requestAPI<Record<string, unknown>>(
+    'runs/' + encodeURIComponent(runId) + ':terminate',
+    {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({})
+    }
+  );
 };
 
 export const importPipelineFromYaml = async (
@@ -79,20 +104,13 @@ export const importPipelineFromYaml = async (
   pipelineYaml: string,
   description?: string
 ) => {
-  const url = `${baseUrl}jupyterlab-kubeflow-pipelines/kfp/pipelines/import`;
-  const xsrfToken = getCookie('_xsrf');
-  const headers = {
-    ...(xsrfToken ? { 'X-XSRFToken': xsrfToken } : {})
-  };
-
-  const response = await axios.post(
-    url,
-    {
+  return requestAPI<ImportPipelineResult>('kfp/pipelines/import', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
       pipeline_name: pipelineName,
       pipeline_yaml: pipelineYaml,
       description: description ?? null
-    },
-    { headers }
-  );
-  return response.data;
+    })
+  });
 };
