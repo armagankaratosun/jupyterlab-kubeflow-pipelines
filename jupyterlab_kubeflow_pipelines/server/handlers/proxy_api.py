@@ -29,23 +29,22 @@ class KfpProxyHandler(APIHandler):
         if self.request.query:
             kfp_url += f"?{self.request.query}"
 
-        # Forward only a minimal allowlist to avoid leaking Hub-specific headers,
-        # while keeping what Dex/IAP or bearer auth needs.
-        allowed_headers = {
-            "authorization",
-            "cookie",
-            "x-xsrftoken",
-            "x-jupyter-xsrf",
-            "content-type",
-            "accept",
-            "accept-encoding",
-            "accept-language",
-            "user-agent",
+        # Pass through all client headers except hop-by-hop ones and Host to
+        # mimic the original axios behavior and keep Dex/IAP/gRPC-Web happy.
+        hop_by_hop = {
+            "host",
+            "connection",
+            "keep-alive",
+            "proxy-authenticate",
+            "proxy-authorization",
+            "te",
+            "trailers",
+            "transfer-encoding",
+            "upgrade",
         }
         headers: dict[str, str] = {
-            h: v for h, v in self.request.headers.items() if h.lower() in allowed_headers
+            h: v for h, v in self.request.headers.items() if h.lower() not in hop_by_hop
         }
-        headers.pop("Host", None)
 
         cfg = get_config(self)
         if cfg.token:
