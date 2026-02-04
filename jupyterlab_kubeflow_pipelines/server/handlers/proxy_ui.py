@@ -82,20 +82,33 @@ class KfpUIProxyHandler(JupyterHandler):
         client = tornado.httpclient.AsyncHTTPClient()
 
         try:
-            headers: dict[str, str] = {}
-            for h, v in self.request.headers.items():
-                l_h = h.lower()
-                if l_h in [
-                    "host",
-                    "content-length",
-                    "cookie",
-                    "x-xsrftoken",
-                    "x-jupyter-xsrf",
-                    "authorization",
-                    "token",
-                ]:
-                    continue
-                headers[h] = v
+            # Forward only the headers required by Dex/IAP and gRPC-Web while
+            # avoiding gratuitous leakage of Hub internals.
+            allowed_headers = {
+                "authorization",
+                "cookie",
+                "x-xsrftoken",
+                "x-jupyter-xsrf",
+                "content-type",
+                "accept",
+                "accept-encoding",
+                "accept-language",
+                "user-agent",
+                # gRPC-Web specifics
+                "x-grpc-web",
+                "grpc-timeout",
+                "grpc-encoding",
+                "grpc-accept-encoding",
+                "x-user-agent",
+                # keep CORS-ish context for some gateways
+                "origin",
+                "referer",
+            }
+            headers: dict[str, str] = {
+                h: v
+                for h, v in self.request.headers.items()
+                if h.lower() in allowed_headers
+            }
 
             if cfg.token:
                 headers["Authorization"] = f"Bearer {cfg.token}"
