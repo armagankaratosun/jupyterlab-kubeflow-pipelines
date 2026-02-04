@@ -29,20 +29,10 @@ class KfpProxyHandler(APIHandler):
         if self.request.query:
             kfp_url += f"?{self.request.query}"
 
-        headers: dict[str, str] = {}
-        for h, v in self.request.headers.items():
-            l_h = h.lower()
-            if l_h in [
-                "host",
-                "content-length",
-                "cookie",
-                "x-xsrftoken",
-                "x-jupyter-xsrf",
-                "authorization",
-                "token",
-            ]:
-                continue
-            headers[h] = v
+        # Preserve client headers (including cookies) so Dex/IAP-style auth continues to work,
+        # but drop Host to avoid upstream rejection.
+        headers: dict[str, str] = dict(self.request.headers)
+        headers.pop("Host", None)
 
         cfg = get_config(self)
         if cfg.token:
