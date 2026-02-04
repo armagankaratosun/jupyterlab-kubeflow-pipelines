@@ -63,4 +63,19 @@ def setup_handlers(web_app) -> None:
         (debug_route, KfpDebugHandler),
     ]
 
+    # JupyterHub path-based deployments mount the user server under base_url
+    # (e.g. /user/<name>/). The embedded KFP UI issues root-relative requests like
+    # /ml_metadata.MetadataStoreService/... which bypass base_url. When JupyterHub
+    # is using subdomains, those requests still reach the single-user server but
+    # will 403 unless we also register root-level handlers.
+    if base_url != "/":
+        handlers.extend(
+            [
+                (r"/ml_metadata.MetadataStoreService/.*", KfpRootProxyHandler),
+                (r"/system/.*", KfpRootProxyHandler),
+                (r"/apis/v1beta1/.*", KfpRootProxyHandler),
+                (r"/apis/v2beta1/.*", KfpRootProxyHandler),
+            ]
+        )
+
     web_app.add_handlers(host_pattern, handlers)
