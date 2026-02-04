@@ -29,9 +29,22 @@ class KfpProxyHandler(APIHandler):
         if self.request.query:
             kfp_url += f"?{self.request.query}"
 
-        # Preserve client headers (including cookies) so Dex/IAP-style auth continues to work,
-        # but drop Host to avoid upstream rejection.
-        headers: dict[str, str] = dict(self.request.headers)
+        # Forward only a minimal allowlist to avoid leaking Hub-specific headers,
+        # while keeping what Dex/IAP or bearer auth needs.
+        allowed_headers = {
+            "authorization",
+            "cookie",
+            "x-xsrftoken",
+            "x-jupyter-xsrf",
+            "content-type",
+            "accept",
+            "accept-encoding",
+            "accept-language",
+            "user-agent",
+        }
+        headers: dict[str, str] = {
+            h: v for h, v in self.request.headers.items() if h.lower() in allowed_headers
+        }
         headers.pop("Host", None)
 
         cfg = get_config(self)
