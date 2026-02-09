@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import url_path_join
+from tornado.web import RequestHandler
 
 
-class BaseUrlRedirectHandler(JupyterHandler):
+class BaseUrlRedirectHandler(RequestHandler):
     """
     Redirect root-relative requests to the Jupyter Server base_url.
 
@@ -60,4 +60,3 @@ class BaseUrlRedirectHandler(JupyterHandler):
 
     def options(self) -> None:
         self._redirect()
-
