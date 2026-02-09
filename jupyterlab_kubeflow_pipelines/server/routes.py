@@ -8,6 +8,7 @@ from ..kfp_compiler import (
 )
 from ..kfp_pipelines import KfpImportPipelineHandler
 from .handlers import (
+    BaseUrlRedirectHandler,
     KfpDebugHandler,
     KfpProxyHandler,
     KfpRootProxyHandler,
@@ -71,10 +72,14 @@ def setup_handlers(web_app) -> None:
     if base_url != "/":
         handlers.extend(
             [
-                (r"/ml_metadata.MetadataStoreService/.*", KfpRootProxyHandler),
-                (r"/system/.*", KfpRootProxyHandler),
-                (r"/apis/v1beta1/.*", KfpRootProxyHandler),
-                (r"/apis/v2beta1/.*", KfpRootProxyHandler),
+                (
+                    r"/ml_metadata.MetadataStoreService/.*",
+                    BaseUrlRedirectHandler,
+                    {"base_url": base_url},
+                ),
+                (r"/system/.*", BaseUrlRedirectHandler, {"base_url": base_url}),
+                (r"/apis/v1beta1/.*", BaseUrlRedirectHandler, {"base_url": base_url}),
+                (r"/apis/v2beta1/.*", BaseUrlRedirectHandler, {"base_url": base_url}),
             ]
         )
 
