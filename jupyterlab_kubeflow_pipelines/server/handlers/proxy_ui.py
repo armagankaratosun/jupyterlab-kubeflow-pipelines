@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 import tornado.httpclient
 from jupyter_server.base.handlers import JupyterHandler
@@ -9,6 +10,9 @@ from tornado import web
 
 from ...config import get_config
 from ..common import base_kfp_endpoint
+
+BRIDGE_COOKIE_NAME = "jlkfp-bridge-auth"
+BRIDGE_COOKIE_TTL_SECONDS = 600
 
 
 class KfpUIProxyHandler(JupyterHandler):
@@ -35,32 +39,64 @@ class KfpUIProxyHandler(JupyterHandler):
         else:
             self.finish(json.dumps({"error": f"HTTP {status_code}"}))
 
+    def _set_bridge_cookie(self) -> None:
+        """
+        Mint a short-lived signed cookie scoped to this user server.
+
+        Root-relative KFP UI calls (e.g. /ml_metadata.MetadataStoreService/*) do not
+        always include JupyterHub's path-scoped auth cookies. This cookie allows our
+        root handlers to authorize and proxy those calls without JS injection.
+        """
+        session_id = self.get_cookie("jupyterhub-session-id", default="") or ""
+        payload = json.dumps(
+            {
+                "base_url": self.settings.get("base_url", "/"),
+                "sid": session_id,
+                "exp": int(time.time()) + BRIDGE_COOKIE_TTL_SECONDS,
+            }
+        )
+        self.set_secure_cookie(
+            BRIDGE_COOKIE_NAME,
+            payload,
+            path="/",
+            httponly=True,
+            secure=self.request.protocol == "https",
+            samesite="Lax",
+        )
+
     @web.authenticated
     async def get(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     @web.authenticated
     async def post(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     @web.authenticated
     async def put(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     @web.authenticated
     async def patch(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     @web.authenticated
     async def delete(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     @web.authenticated
     async def options(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     @web.authenticated
     async def head(self, path: str) -> None:
+        self._set_bridge_cookie()
         await self._proxy(path)
 
     async def _proxy(self, path: str) -> None:

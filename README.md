@@ -40,6 +40,20 @@ the frontend extension, check the frontend extension is installed:
 jupyter labextension list
 ```
 
+### JupyterHub + embedded KFP UI
+
+Kubeflow Pipelines UI issues root-relative calls (for example
+`/ml_metadata.MetadataStoreService/...`) even when Jupyter is mounted under a
+base URL such as `/user/<name>/`.
+
+This extension handles that by minting a short-lived signed bridge cookie on
+authenticated `/kfp-ui/*` responses and accepting it on root KFP proxy routes.
+That allows gRPC-web/system calls to be proxied safely without JS injection.
+
+Important: this still requires those root requests to reach the single-user
+Jupyter server process. In pure path-based JupyterHub deployments where root
+paths are handled by Hub/proxy, user-server extensions cannot intercept them.
+
 ## Contributing
 
 ### Development install
