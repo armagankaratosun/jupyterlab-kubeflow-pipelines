@@ -8,6 +8,8 @@ except ImportError:
     warnings.warn("Importing 'jupyterlab_kubeflow_pipelines' outside a proper installation.")
     __version__ = "dev"
 from .routes import setup_route_handlers
+from .notebook import KFPClient
+from .preview import display_dag_preview
 
 
 def _jupyter_labextension_paths():
@@ -34,3 +36,11 @@ def _load_jupyter_server_extension(server_app):
     setup_route_handlers(server_app.web_app)
     name = "jupyterlab_kubeflow_pipelines"
     server_app.log.info(f"Registered {name} server extension")
+
+
+__all__ = [
+    "__version__",
+    "KFPClient",
+    "display_dag_preview",
+    "setup_route_handlers",
+]
