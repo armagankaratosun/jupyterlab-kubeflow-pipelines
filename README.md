@@ -46,13 +46,39 @@ Kubeflow Pipelines UI issues root-relative calls (for example
 `/ml_metadata.MetadataStoreService/...`) even when Jupyter is mounted under a
 base URL such as `/user/<name>/`.
 
-This extension handles that by minting a short-lived signed bridge cookie on
-authenticated `/kfp-ui/*` responses and accepting it on root KFP proxy routes.
-That allows gRPC-web/system calls to be proxied safely without JS injection.
+This extension handles that in the `/kfp-ui/*` proxy by safely rewriting
+root-relative API paths in proxied KFP JavaScript/HTML responses so they stay
+under the user server base path.
 
-Important: this still requires those root requests to reach the single-user
-Jupyter server process. In pure path-based JupyterHub deployments where root
-paths are handled by Hub/proxy, user-server extensions cannot intercept them.
+Rewrites include:
+
+- `/ml_metadata.MetadataStoreService/...` -> `/<base_url>/kfp-ui/ml_metadata.MetadataStoreService/...`
+- `/system/...` -> `/<base_url>/kfp-ui/system/...`
+- `/apis/v1beta1/...`, `/apis/v2beta1/...` -> `/<base_url>/kfp-ui/apis/...`
+
+This keeps gRPC-web/system calls on the single-user server path and avoids
+JupyterHub root-level XSRF/403 failures, without injecting custom client-side
+scripts.
+
+### Local JupyterHub Repro Harness
+
+To reproduce Hub-specific routing behavior quickly on a laptop:
+
+```bash
+bash dev/jupyterhub-local/run-local-hub.sh
+```
+
+Notes:
+
+- The helper creates a local venv at `.venv-hub-local`.
+- It runs JupyterHub on `http://127.0.0.1:8100`.
+- Hub internal API defaults to `http://127.0.0.1:8102` to avoid common local port conflicts.
+- Dummy login is enabled (`password: devpass`, username can be any value).
+- The helper installs `configurable-http-proxy` locally under `dev/jupyterhub-local/node_modules`.
+- After first setup, use `LOCAL_HUB_BOOTSTRAP=0 bash dev/jupyterhub-local/run-local-hub.sh` for fast restarts.
+- If you hit redirect loops, start with `LOCAL_HUB_RESET=1 LOCAL_HUB_BOOTSTRAP=0 bash dev/jupyterhub-local/run-local-hub.sh`.
+- The helper pre-cleans stale local `jupyterhub`/`configurable-http-proxy` listeners on Hub/proxy ports.
+- The helper also terminates older runs started with the same local config before launching.
 
 ## Contributing
 

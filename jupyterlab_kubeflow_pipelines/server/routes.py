@@ -8,10 +8,9 @@ from ..kfp_compiler import (
 )
 from ..kfp_pipelines import KfpImportPipelineHandler
 from .handlers import (
-    BaseUrlRedirectHandler,
     KfpDebugHandler,
     KfpProxyHandler,
-    KfpRootProxyHandler,
+    KfpRootFallbackProxyHandler,
     KfpRunHandler,
     KfpRunTerminateHandler,
     KfpSettingsHandler,
@@ -54,33 +53,21 @@ def setup_handlers(web_app) -> None:
         (import_pipeline_route, KfpImportPipelineHandler),
         (run_terminate_route, KfpRunTerminateHandler),
         (run_route, KfpRunHandler),
-        (
-            url_path_join(base_url, "ml_metadata.MetadataStoreService/.*"),
-            KfpRootProxyHandler,
-        ),
-        (url_path_join(base_url, "system/.*"), KfpRootProxyHandler),
-        (url_path_join(base_url, "apis/v1beta1/.*"), KfpRootProxyHandler),
-        (url_path_join(base_url, "apis/v2beta1/.*"), KfpRootProxyHandler),
         (debug_route, KfpDebugHandler),
     ]
 
-    # JupyterHub path-based deployments mount the user server under base_url
-    # (e.g. /user/<name>/). The embedded KFP UI issues root-relative requests like
-    # /ml_metadata.MetadataStoreService/... which bypass base_url. When JupyterHub
-    # is using subdomains, those requests still reach the single-user server but
-    # will 403 unless we also register root-level handlers.
-    if base_url != "/":
-        handlers.extend(
-            [
-                (
-                    r"/ml_metadata.MetadataStoreService/.*",
-                    BaseUrlRedirectHandler,
-                    {"base_url": base_url},
-                ),
-                (r"/system/.*", BaseUrlRedirectHandler, {"base_url": base_url}),
-                (r"/apis/v1beta1/.*", BaseUrlRedirectHandler, {"base_url": base_url}),
-                (r"/apis/v2beta1/.*", BaseUrlRedirectHandler, {"base_url": base_url}),
-            ]
-        )
+    handlers.extend(
+        [
+            (
+                r"/ml_metadata.MetadataStoreService/.*",
+                KfpRootFallbackProxyHandler,
+                {"base_url": base_url},
+            ),
+            (r"/system/.*", KfpRootFallbackProxyHandler, {"base_url": base_url}),
+            (r"/apis/v1beta1/.*", KfpRootFallbackProxyHandler, {"base_url": base_url}),
+            (r"/apis/v2beta1/.*", KfpRootFallbackProxyHandler, {"base_url": base_url}),
+            (r"/k8s/.*", KfpRootFallbackProxyHandler, {"base_url": base_url}),
+        ]
+    )
 
     web_app.add_handlers(host_pattern, handlers)
