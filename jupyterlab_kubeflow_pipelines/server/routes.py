@@ -15,6 +15,7 @@ from .handlers import (
     KfpRunTerminateHandler,
     KfpSettingsHandler,
     KfpUIProxyHandler,
+    KfpUIPathRewriteScriptHandler,
 )
 
 
@@ -34,6 +35,7 @@ def setup_handlers(web_app) -> None:
     import_pipeline_route = url_path_join(
         base_url, "jupyterlab-kubeflow-pipelines", "kfp", "pipelines", "import"
     )
+    kfp_ui_rewrite_script_route = url_path_join(base_url, "kfp-ui", "_jlkfp_path_rewrite.js")
     kfp_ui_route = url_path_join(base_url, "kfp-ui", "(.*)")
     settings_route = url_path_join(
         base_url, "jupyterlab-kubeflow-pipelines", "settings"
@@ -47,6 +49,7 @@ def setup_handlers(web_app) -> None:
     handlers = [
         (settings_route, KfpSettingsHandler),
         (api_proxy_route, KfpProxyHandler),
+        (kfp_ui_rewrite_script_route, KfpUIPathRewriteScriptHandler),
         (kfp_ui_route, KfpUIProxyHandler),
         (compile_route, KfpCompileHandler),
         (submit_route, KfpSubmitHandler),

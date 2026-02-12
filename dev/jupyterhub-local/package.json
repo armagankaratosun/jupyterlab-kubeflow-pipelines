@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "configurable-http-proxy": "^5.1.1"
+  }
+}

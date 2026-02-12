@@ -46,19 +46,21 @@ Kubeflow Pipelines UI issues root-relative calls (for example
 `/ml_metadata.MetadataStoreService/...`) even when Jupyter is mounted under a
 base URL such as `/user/<name>/`.
 
-This extension handles that in the `/kfp-ui/*` proxy by safely rewriting
-root-relative API paths in proxied KFP JavaScript/HTML responses so they stay
-under the user server base path.
+In a path-based JupyterHub deployment, those requests would otherwise go to the
+Hub at `/<...>` (not the single-user server at `/<base_url>/...`), and commonly
+fail with `403` (XSRF) errors.
 
-Rewrites include:
+This extension addresses that by injecting a small, scoped runtime URL rewriter
+into the proxied KFP UI *shell HTML* only (no Hub config changes required). The
+rewriter ensures root-relative KFP API calls stay under the user server path:
 
 - `/ml_metadata.MetadataStoreService/...` -> `/<base_url>/kfp-ui/ml_metadata.MetadataStoreService/...`
 - `/system/...` -> `/<base_url>/kfp-ui/system/...`
 - `/apis/v1beta1/...`, `/apis/v2beta1/...` -> `/<base_url>/kfp-ui/apis/...`
+- `/k8s/...` -> `/<base_url>/kfp-ui/k8s/...`
 
-This keeps gRPC-web/system calls on the single-user server path and avoids
-JupyterHub root-level XSRF/403 failures, without injecting custom client-side
-scripts.
+To stay compatible with stricter Content-Security-Policy setups, the injected
+tag loads the rewriter from `/<base_url>/kfp-ui/_jlkfp_path_rewrite.js`.
 
 ### Local JupyterHub Repro Harness
 

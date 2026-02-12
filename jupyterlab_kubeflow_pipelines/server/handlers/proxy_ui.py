@@ -14,6 +14,92 @@ from ..common import base_kfp_endpoint
 BRIDGE_COOKIE_NAME = "jlkfp-bridge-auth"
 BRIDGE_COOKIE_TTL_SECONDS = 600
 _RUNTIME_REWRITER_SENTINEL = "__KFP_PATH_REWRITE_INSTALLED__"
+_RUNTIME_REWRITER_SCRIPT_ID = "jlkfp-path-rewrite"
+_RUNTIME_REWRITER_SCRIPT_PATH = "_jlkfp_path_rewrite.js"
+
+
+class KfpUIPathRewriteScriptHandler(JupyterHandler):
+    """
+    Serve a small runtime script that rewrites root-relative KFP UI calls.
+
+    The KFP UI frequently calls absolute paths like `/ml_metadata...` which
+    break in path-based JupyterHub setups (they go to Hub, not the user server).
+    We inject this script tag into the KFP UI HTML shell (see KfpUIProxyHandler)
+    and the script patches fetch/XHR to keep such calls under /<base_url>/kfp-ui.
+    """
+
+    @web.authenticated
+    async def get(self) -> None:
+        base_proxy_url = url_path_join(self.settings.get("base_url", "/"), "kfp-ui").rstrip(
+            "/"
+        )
+
+        self.set_header("Content-Type", "application/javascript")
+        self.set_header("Cache-Control", "no-store, max-age=0")
+        self.set_header("Pragma", "no-cache")
+        self.set_header("Expires", "0")
+
+        # Keep this script ES5-ish; KFP UI may be served to older browsers.
+        script = (
+            "(function(){"
+            f"if(window.{_RUNTIME_REWRITER_SENTINEL})return;"
+            f"window.{_RUNTIME_REWRITER_SENTINEL}=true;"
+            "var base='';"
+            "try{"
+            "var cs=document.currentScript;"
+            "if(cs){base=cs.getAttribute('data-base')||'';}"
+            "}catch(e){}"
+            "if(!base){"
+            "try{"
+            "var p=window.location.pathname||'';"
+            "var idx=p.indexOf('/kfp-ui');"
+            "if(idx>=0){base=p.substring(0,idx+7);}"
+            "}catch(e){}"
+            "}"
+            f"if(!base){{base={json.dumps(base_proxy_url)};}}"
+            "if(base.charAt(base.length-1)==='/'){base=base.slice(0,-1);}"
+            "var prefixes=['/ml_metadata.MetadataStoreService/','/system/','/apis/v1beta1/','/apis/v2beta1/','/k8s/'];"
+            "function needsRewrite(path){"
+            "for(var i=0;i<prefixes.length;i++){if(path.indexOf(prefixes[i])===0){return true;}}"
+            "return false;"
+            "}"
+            "function rewriteUrl(url){"
+            "if(typeof url!=='string'){return url;}"
+            "if(url.indexOf(base+'/')===0){return url;}"
+            "if(needsRewrite(url)){return base+url;}"
+            "try{"
+            "var parsed=new URL(url,window.location.href);"
+            "if(parsed.origin===window.location.origin&&parsed.pathname.indexOf(base+'/')===0){"
+            "return parsed.pathname+(parsed.search||'')+(parsed.hash||'');"
+            "}"
+            "if(parsed.origin===window.location.origin&&needsRewrite(parsed.pathname)){"
+            "return base+parsed.pathname+(parsed.search||'')+(parsed.hash||'');"
+            "}"
+            "}catch(e){}"
+            "return url;"
+            "}"
+            "if(window.fetch){"
+            "var _fetch=window.fetch;"
+            "window.fetch=function(input,init){"
+            "if(typeof input==='string'){return _fetch.call(this,rewriteUrl(input),init);}"
+            "if(input&&typeof input.url==='string'){"
+            "var newUrl=rewriteUrl(input.url);"
+            "if(newUrl!==input.url){input=new Request(newUrl,input);}"
+            "}"
+            "return _fetch.call(this,input,init);"
+            "};"
+            "}"
+            "if(window.XMLHttpRequest&&window.XMLHttpRequest.prototype){"
+            "var _open=window.XMLHttpRequest.prototype.open;"
+            "window.XMLHttpRequest.prototype.open=function(method,url){"
+            "var args=Array.prototype.slice.call(arguments);"
+            "if(args.length>1){args[1]=rewriteUrl(String(url));}"
+            "return _open.apply(this,args);"
+            "};"
+            "}"
+            "})();"
+        )
+        self.write(script)
 
 
 class KfpUIProxyHandler(JupyterHandler):
@@ -132,55 +218,15 @@ class KfpUIProxyHandler(JupyterHandler):
         return rewritten.encode("utf-8")
 
     def _inject_runtime_path_rewriter(self, *, html: str, base_proxy_url: str) -> str:
-        if _RUNTIME_REWRITER_SENTINEL in html:
+        if _RUNTIME_REWRITER_SCRIPT_ID in html or _RUNTIME_REWRITER_SENTINEL in html:
             return html
 
-        safe_base = json.dumps(base_proxy_url.rstrip("/"))
+        # Avoid inline scripts to stay compatible with stricter CSP deployments.
+        script_src = url_path_join(base_proxy_url, _RUNTIME_REWRITER_SCRIPT_PATH)
+        safe_base_attr = json.dumps(base_proxy_url.rstrip("/")).strip('"')
         script = (
-            "<script>(function(){"
-            f"if(window.{_RUNTIME_REWRITER_SENTINEL})return;"
-            f"window.{_RUNTIME_REWRITER_SENTINEL}=true;"
-            "var base=" + safe_base + ";"
-            "var prefixes=['/ml_metadata.MetadataStoreService/','/system/','/apis/v1beta1/','/apis/v2beta1/','/k8s/'];"
-            "function needsRewrite(path){"
-            "for(var i=0;i<prefixes.length;i++){if(path.indexOf(prefixes[i])===0){return true;}}"
-            "return false;"
-            "}"
-            "function rewriteUrl(url){"
-            "if(typeof url!=='string'){return url;}"
-            "if(url.indexOf(base+'/')===0){return url;}"
-            "if(needsRewrite(url)){return base+url;}"
-            "try{"
-            "var parsed=new URL(url,window.location.href);"
-            "if(parsed.origin===window.location.origin&&parsed.pathname.indexOf(base+'/')===0){"
-            "return parsed.pathname+(parsed.search||'')+(parsed.hash||'');"
-            "}"
-            "if(parsed.origin===window.location.origin&&needsRewrite(parsed.pathname)){"
-            "return base+parsed.pathname+(parsed.search||'')+(parsed.hash||'');"
-            "}"
-            "}catch(e){}"
-            "return url;"
-            "}"
-            "if(window.fetch){"
-            "var _fetch=window.fetch;"
-            "window.fetch=function(input,init){"
-            "if(typeof input==='string'){return _fetch.call(this,rewriteUrl(input),init);}"
-            "if(input&&typeof input.url==='string'){"
-            "var newUrl=rewriteUrl(input.url);"
-            "if(newUrl!==input.url){input=new Request(newUrl,input);}"
-            "}"
-            "return _fetch.call(this,input,init);"
-            "};"
-            "}"
-            "if(window.XMLHttpRequest&&window.XMLHttpRequest.prototype){"
-            "var _open=window.XMLHttpRequest.prototype.open;"
-            "window.XMLHttpRequest.prototype.open=function(method,url){"
-            "var args=Array.prototype.slice.call(arguments);"
-            "if(args.length>1){args[1]=rewriteUrl(String(url));}"
-            "return _open.apply(this,args);"
-            "};"
-            "}"
-            "})();</script>"
+            f'<script id="{_RUNTIME_REWRITER_SCRIPT_ID}" '
+            f'src="{script_src}" data-base="{safe_base_attr}"></script>'
         )
 
         if "<head>" in html:

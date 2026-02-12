@@ -21,7 +21,13 @@ ui-tests/playwright-report/
 ### Python ###
 # Virtual environments
 .venv*
-dev
+
+# Local dev harness artifacts (do not ignore the whole dev/ tree)
+dev/jupyterhub-local/.jupyterhub/
+dev/jupyterhub-local/node_modules/
+dev/jupyterhub-local/package-lock.json
+dev/jupyterhub-local/__pycache__/
+jupyterhub-proxy.pid
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
