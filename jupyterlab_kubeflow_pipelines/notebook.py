@@ -80,15 +80,28 @@ class KFPClient:
     without the user needing to copy/paste IDs.
     """
 
-    endpoint: str = "http://localhost:8080"
+    endpoint: str = "http://ml-pipeline.kubeflow.svc.cluster.local:8888"
     namespace: str = "kubeflow"
+    use_service_account_token: bool = False
     _client: Any = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         from kfp import Client
 
         self.endpoint = self.endpoint.rstrip("/")
-        self._client = Client(host=self.endpoint, namespace=self.namespace)
+        client_kwargs: dict[str, object] = {
+            "host": self.endpoint,
+            "namespace": self.namespace,
+        }
+        if self.use_service_account_token:
+            try:
+                from kfp.client import ServiceAccountTokenVolumeCredentials
+            except ImportError as err:
+                raise RuntimeError(
+                    "Service account token auth requires kfp.client."
+                ) from err
+            client_kwargs["credentials"] = ServiceAccountTokenVolumeCredentials()
+        self._client = Client(**client_kwargs)
 
     @property
     def sdk(self) -> Any:
@@ -96,6 +109,15 @@ class KFPClient:
         Access to the underlying KFP Python SDK client for advanced operations.
         """
         return self._client
+
+    def __getattr__(self, name: str) -> Any:
+        """
+        Delegate unknown attributes to the underlying KFP SDK client.
+
+        This preserves full SDK functionality on the wrapper instance, e.g.
+        `client.list_experiments(...)`.
+        """
+        return getattr(self._client, name)
 
     def sync_to_jupyterlab(self) -> None:
         """
