@@ -5,7 +5,7 @@ import os
 import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from .run import Run
@@ -197,7 +197,7 @@ class KFPClient:
                 try:
                     parsed = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                     if parsed.tzinfo is None:
-                        parsed = parsed.replace(tzinfo=UTC)
+                        parsed = parsed.replace(tzinfo=timezone.utc)
                     return float(parsed.timestamp())
                 except Exception:
                     return 0.0
