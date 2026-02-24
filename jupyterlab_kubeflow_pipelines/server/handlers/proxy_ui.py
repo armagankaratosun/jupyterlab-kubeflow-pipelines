@@ -9,7 +9,7 @@ from jupyter_server.utils import url_path_join
 from tornado import web
 
 from ...config import get_config
-from ..common import base_kfp_endpoint
+from ..common import base_kfp_ui_endpoint, ensure_namespace_query
 
 BRIDGE_COOKIE_NAME = "jlkfp-bridge-auth"
 BRIDGE_COOKIE_TTL_SECONDS = 600
@@ -238,19 +238,23 @@ class KfpUIProxyHandler(JupyterHandler):
     async def _proxy(self, path: str) -> None:
         cfg = get_config(self)
         try:
-            kfp_endpoint = base_kfp_endpoint(cfg.endpoint).rstrip("/")
+            kfp_endpoint = base_kfp_ui_endpoint(cfg.endpoint).rstrip("/")
         except ValueError as e:
             self.set_status(412)
             self.set_header("Content-Type", "application/json")
             self.write(json.dumps({"error": str(e)}))
             return
 
+        effective_query = ensure_namespace_query(
+            path=path,
+            query=self.request.query or "",
+            namespace=cfg.namespace,
+        )
         kfp_url = f"{kfp_endpoint}/{path.lstrip('/')}"
-        if self.request.query:
-            kfp_url += f"?{self.request.query}"
+        if effective_query:
+            kfp_url += f"?{effective_query}"
 
         self.log.info(f"KFP Proxy Request: {self.request.method} {path} -> {kfp_url}")
-
         client = tornado.httpclient.AsyncHTTPClient()
 
         try:

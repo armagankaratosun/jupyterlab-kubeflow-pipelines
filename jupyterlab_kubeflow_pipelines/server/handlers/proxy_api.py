@@ -7,7 +7,7 @@ from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
 from ...config import get_config
-from ..common import base_kfp_endpoint
+from ..common import base_kfp_endpoint, ensure_namespace_query
 
 
 class KfpProxyHandler(APIHandler):
@@ -26,8 +26,14 @@ class KfpProxyHandler(APIHandler):
             self.write(json.dumps({"error": str(e)}))
             return
 
-        if self.request.query:
-            kfp_url += f"?{self.request.query}"
+        cfg = get_config(self)
+        effective_query = ensure_namespace_query(
+            path=f"apis/v2beta1/{path.lstrip('/')}",
+            query=self.request.query or "",
+            namespace=cfg.namespace,
+        )
+        if effective_query:
+            kfp_url += f"?{effective_query}"
 
         # Pass through all client headers except hop-by-hop ones and Host to
         # mimic the original axios behavior and keep Dex/IAP/gRPC-Web happy.
@@ -46,7 +52,6 @@ class KfpProxyHandler(APIHandler):
             h: v for h, v in self.request.headers.items() if h.lower() not in hop_by_hop
         }
 
-        cfg = get_config(self)
         if cfg.token:
             headers["Authorization"] = f"Bearer {cfg.token}"
 

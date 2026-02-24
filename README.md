@@ -40,6 +40,18 @@ the frontend extension, check the frontend extension is installed:
 jupyter labextension list
 ```
 
+### NetworkPolicy requirements
+
+In Kubernetes deployments, ensure notebook/hub pods can reach both Kubeflow
+Pipelines API and UI backends. This applies to both standalone KFP and
+Kubeflow Platform setups.
+
+- API backend: `ml-pipeline` (commonly port `8888`)
+- UI backend: `ml-pipeline-ui` (commonly service port `80` -> pod port `3000`)
+
+If cross-namespace traffic is restricted, allow ingress from your profile/user
+namespaces to the `ml-pipeline` and `ml-pipeline-ui` pods/services.
+
 ### JupyterHub + embedded KFP UI
 
 Kubeflow Pipelines UI issues root-relative calls (for example
@@ -51,7 +63,7 @@ Hub at `/<...>` (not the single-user server at `/<base_url>/...`), and commonly
 fail with `403` (XSRF) errors.
 
 This extension addresses that by injecting a small, scoped runtime URL rewriter
-into the proxied KFP UI *shell HTML* only (no Hub config changes required). The
+into the proxied KFP UI _shell HTML_ only (no Hub config changes required). The
 rewriter ensures root-relative KFP API calls stay under the user server path:
 
 - `/ml_metadata.MetadataStoreService/...` -> `/<base_url>/kfp-ui/ml_metadata.MetadataStoreService/...`
